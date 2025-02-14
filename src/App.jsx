@@ -1,36 +1,54 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { auth } from './firebase'; // Import Firebase auth
-import { onAuthStateChanged } from 'firebase/auth'; // Listen for auth state changes
-import Login from './components/Login';
-import Dashboard from './components/Dashboard';
+import React, { useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import { auth, db } from './services/firebase'; // Import Firebase and Firestore
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
+import CustomerDashboard from './pages/CustomerDashboard';
+import AgentDashboard from './pages/AgentDashboard';
+import Login from './pages/Login';
 
 const App = () => {
-  const [user, setUser] = useState(null); // State to track the user
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Set up listener for auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser); // Set user if logged in
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          // Fetch the user role from Firestore using the user's UID
+          const userRef = doc(db, 'users', user.uid);  // Reference to user document in Firestore
+          const docSnap = await getDoc(userRef);
+
+          if (docSnap.exists()) {
+            const userRole = docSnap.data().role; // Get the role from the Firestore document
+
+            // Navigate based on the user role
+            if (userRole === 'Customer') {
+              navigate('/customer-dashboard');
+            } else if (userRole === 'Agent') {
+              navigate('/agent-dashboard');
+            }
+          } else {
+            console.log('User document not found in Firestore');
+            navigate('/login');  // Redirect to login if the user document doesn't exist
+          }
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+          navigate('/login');
+        }
       } else {
-        setUser(null); // Set user to null if logged out
+        navigate('/login');  // Redirect to login if no user is authenticated
       }
     });
 
-    // Cleanup the listener when the component is unmounted
-    return () => unsubscribe();
-  }, []);
+    return () => unsubscribe();  // Clean up the listener
+  }, [navigate]);
 
   return (
-    <Router>
-      <Routes>
-        {/* Redirect to Dashboard if user is logged in, otherwise show Login */}
-        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-        {/* Protect the dashboard route by ensuring the user is logged in */}
-        <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" />} />
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/customer-dashboard" element={<CustomerDashboard />} />
+      <Route path="/agent-dashboard" element={<AgentDashboard />} />
+    </Routes>
   );
 };
 
