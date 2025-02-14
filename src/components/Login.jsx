@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, onAuthStateChanged } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebase.js'; // Import auth and db
-import { doc, setDoc } from 'firebase/firestore'; // Import Firestore methods
+import { auth, db } from '../firebase.js';
+import { doc, setDoc } from 'firebase/firestore';
+import { Lock } from 'lucide-react';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -11,14 +12,13 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Check if the user is already logged in
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        navigate('/dashboard'); // Redirect to dashboard if user is logged in
+        navigate('/dashboard');
       }
     });
-    return () => unsubscribe(); // Cleanup on unmount
+    return () => unsubscribe();
   }, [navigate]);
 
   const handleSubmit = async (e) => {
@@ -30,15 +30,14 @@ const Login = () => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // After login, store user data in Firestore
-      const userRef = doc(db, "users", user.uid); // Use user's UID to create a unique document
+      const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
         email: user.email,
-        role: 'customer', // You can change the role based on your requirements
-        profilePicture: "", // Or set to null if you don't want to store an empty string
+        role: 'customer',
+        profilePicture: "",
       });
 
-      navigate('/dashboard'); // Redirect to dashboard on successful login
+      navigate('/dashboard');
     } catch (err) {
       switch (err.code) {
         case 'auth/invalid-email':
@@ -59,17 +58,20 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
+    <div className="min-h-screen flex items-center justify-center bg-zinc-100">
+      <div className="max-w-md w-full mx-4 p-8 bg-white rounded-xl shadow-lg">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-6">
+            <Lock className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-zinc-900">Welcome Back</h2>
+          <p className="mt-2 text-zinc-600">Please sign in to continue</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="sr-only">
+              <label htmlFor="email" className="block text-sm font-medium text-zinc-700 mb-1">
                 Email address
               </label>
               <input
@@ -77,14 +79,15 @@ const Login = () => {
                 name="email"
                 type="email"
                 required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                className="w-full px-4 py-3 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all bg-zinc-50 text-zinc-900"
+                placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
+
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className="block text-sm font-medium text-zinc-700 mb-1">
                 Password
               </label>
               <input
@@ -92,8 +95,8 @@ const Login = () => {
                 name="password"
                 type="password"
                 required
-                className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                className="w-full px-4 py-3 rounded-lg border border-zinc-300 focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all bg-zinc-50 text-zinc-900"
+                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -101,24 +104,31 @@ const Login = () => {
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{error}</div>
+            <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+              <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-                loading
-                  ? 'bg-blue-400 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500'
-              }`}
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all
+              ${loading 
+                ? 'bg-zinc-400 cursor-not-allowed' 
+                : 'bg-zinc-900 hover:bg-zinc-800 active:bg-zinc-950'}`}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </span>
+            ) : (
+              'Sign in'
+            )}
+          </button>
         </form>
       </div>
     </div>

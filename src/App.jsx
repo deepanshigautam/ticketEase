@@ -24,11 +24,12 @@ const App = () => {
 
   return (
     <Router>
-     <Routes>
-  <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
-  <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" replace />} />
-</Routes>
-
+      <Routes>
+        {/* Redirect to Dashboard if user is logged in, otherwise show Login */}
+        <Route path="/" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+        {/* Protect the dashboard route by ensuring the user is logged in */}
+        <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/" />} />
+      </Routes>
     </Router>
   );
 };
